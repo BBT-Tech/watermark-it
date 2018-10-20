@@ -1,5 +1,23 @@
 <template>
   <div class="watermark-panel">
+    <el-dialog
+      :visible.sync="dialogVisible"
+      title="输入配置名字"
+      width="30%">
+      <el-row class="setting-row">
+        <template>
+          <el-input v-model="configSaveName" />
+        </template>
+      </el-row>
+      <span
+        slot="footer"
+        class="dialog-footer">
+        <el-button @click="dialogVisible = false">取 消</el-button>
+        <el-button
+          type="primary"
+          @click="saveConfig">保 存</el-button>
+      </span>
+    </el-dialog>
     <water-marker
       ref="watermarker"
       :width="800"
@@ -76,7 +94,13 @@
         <p>x:{{ config.x }}</p>
         <p>y:{{ config.y }}</p>
       </el-row>
-      <el-button @click="loadConfig">testLoad</el-button>
+      <el-row style="display:flex; justify-content: center;">
+        <el-button
+          type="primary"
+          plain
+          @click="dialogVisible = true">保存配置文件</el-button>
+      </el-row>
+
     </el-card>
   </div>
 </template>
@@ -123,7 +147,9 @@ export default {
         ratio: 0
       },
       isSettingConfig: false,
-      savedConfigs: []
+      dialogVisible: false,
+      savedConfigs: [],
+      configSaveName: ''
     }
   },
   computed: {
@@ -238,7 +264,6 @@ export default {
       }
       this.config.x = x
       this.config.y = y
-      console.log(x, y)
     },
     setSmallRatio(ratio) {
       if (this.config.smallRatioRefer === 'self') {
@@ -263,7 +288,6 @@ export default {
       return watermarkImage(this.bgimg, this.smallimg, x, y, width, height)
     },
     loadConfig(config){
-      console.log(JSON.stringify(this.config))
       this.isSettingConfig = true
       Object.assign(this.config, config)
       this.$nextTick(() => {
@@ -274,7 +298,7 @@ export default {
       let {data} = await this.$axios.get('./api/configs')
       this.savedConfigs = data
     },
-        querySearchAsync(query, cb){
+    querySearchAsync(query, cb){
       if(!query){
         query = ''
       }
@@ -291,6 +315,28 @@ export default {
       let {data} = await this.$axios.get(src)
       this.loadConfig(data)
     },
+    async saveConfig(){
+      if(this.configSaveName === ''){
+        return
+      }
+      let {data} = await this.$axios.post('./api/configs', {
+        name: this.configSaveName,
+        config: this.config
+      }).catch(e => {
+        this.$notify.error({
+          title: '保存失败',
+          message: '未知错误'
+        });
+        throw e
+      })
+      await this.fetchConfigs()
+      this.$notify({
+          title: '保存成功',
+          message: '可以在下次复用该配置文件噢',
+          type: 'success'
+        });
+      this.dialogVisible = false
+    }
   },
 }
 </script>

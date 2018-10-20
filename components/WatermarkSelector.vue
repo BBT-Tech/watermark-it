@@ -25,7 +25,6 @@
         :src="curImg"
         width="100px">
     </div>
-
 </div></template>
 <script>
 import ImageItem from '~/components/ImageItem'

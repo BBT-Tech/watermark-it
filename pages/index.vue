@@ -33,7 +33,7 @@
           <WatermarkPanel
             ref="watermark-panel"
             :smallimg="watermarkUrl"
-            :bgimg="bgImageUrl"/>
+            :bgimg="bgImageUrl" />
         </div>
         <div v-show="step === 3">
           <img
@@ -42,9 +42,16 @@
         </div>
       </div>
       <el-button
+        v-if="step < 3"
         :disabled="!couldGoNext"
         style="float: right;"
+        type="success"
         @click="goNext">下一步</el-button>
+      <el-button
+        v-if="step === 3"
+        style="float: right;"
+        type="primary"
+        @click="saveImage">保存</el-button>
     </div>
 
   </div>
@@ -88,7 +95,7 @@ export default {
       if (newVal > this.maxStep) {
         this.maxStep = newVal
       }
-      if(newVal === 3){
+      if (newVal === 3) {
         this.$refs['watermark-panel'].getImage().then(e => {
           this.finishImageUrl = e
         })
@@ -109,6 +116,16 @@ export default {
     },
     onSmallChange(src) {
       this.watermarkUrl = src
+    },
+    async saveImage() {
+      const dlLink = document.createElement('a');
+      const imgUrl = this.finishImageUrl
+      dlLink.download = 'export.png';
+      dlLink.href = imgUrl;
+      dlLink.dataset.downloadurl = ['image/png', dlLink.download, dlLink.href].join(':');
+      document.body.appendChild(dlLink);
+      dlLink.click();
+      document.body.removeChild(dlLink);
     }
   },
 }
@@ -121,7 +138,7 @@ export default {
   .center-div {
     margin: 0 auto;
     width: 800px;
-    .module-container{
+    .module-container {
       width: 100%;
       display: flex;
       justify-content: center;

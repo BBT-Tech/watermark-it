@@ -39,7 +39,16 @@ module.exports = function (app) {
     res.send(files)
   })
   app.post('/api/configs', async(req,res) => {
-    const files = await scandir(path.resolve(__dirname, './uploads/configs'))
-    res.send(files)
+    const name = req.body.name || ''
+    const config = req.body.config
+    if(name === '' || (typeof config) !== 'object'){
+      res.status(400).send('name and config is needed')
+    }else{
+      const baseDir = path.resolve(__dirname, './uploads/configs')
+      const filename = path.basename(path.resolve(baseDir,name)) + '.json'
+      fs.writeFileSync(path.resolve(baseDir,filename), JSON.stringify(config))
+      res.status(200).send('')
+    }
+
   })
 }

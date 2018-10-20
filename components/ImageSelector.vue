@@ -6,8 +6,8 @@
     <div
       v-if="selected === false"
       class="cover">
-      <span>拖动图片至此</span>
-      <span>或点击上传</span>
+      <!-- <span>拖动图片至此</span> -->
+      <span>点击选择图片</span>
     </div>
     <div class="image-div">
       <img
