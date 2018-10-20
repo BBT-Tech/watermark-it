@@ -29,8 +29,17 @@ async function scandir(dir, prefix = '') {
 }
 module.exports = function (app) {
   app.use('/watermarks', express.static(path.resolve(__dirname,'./uploads/watermarks')))
+  app.use('/configs', express.static(path.resolve(__dirname,'./uploads/configs')))
   app.get('/api/watermarks', async (req, res) => {
     const files = await scandir(path.resolve(__dirname, './uploads/watermarks'))
+    res.send(files)
+  })
+  app.get('/api/configs', async(req,res) => {
+    const files = await scandir(path.resolve(__dirname, './uploads/configs'))
+    res.send(files)
+  })
+  app.post('/api/configs', async(req,res) => {
+    const files = await scandir(path.resolve(__dirname, './uploads/configs'))
     res.send(files)
   })
 }

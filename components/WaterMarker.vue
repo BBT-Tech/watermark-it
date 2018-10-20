@@ -150,11 +150,11 @@ export default {
       if (y > canvas.height) {
         y = canvas.height
       }
-      if (x < 0) {
-        x = 0
+      if (x < -1*this.small_width) {
+        x = -1*this.small_width
       }
-      if (y < 0) {
-        y = 0
+      if (y < -1 * this.small_height) {
+        y = -1 * this.small_height
       }
       if(this.mode === 'move'){
         this.redraw(x, y)

@@ -13,6 +13,12 @@
         class="clearfix">
         <span>配置</span>
       </div>
+      <el-autocomplete
+        :fetch-suggestions="querySearchAsync"
+        placeholder="搜索已有配置文件"
+        style="width: 99%;display: block; margin: 10px auto;"
+        @select="handleSelect"
+      />
       <el-row class="setting-row">
         定位方式：
         <template>
@@ -71,8 +77,6 @@
         <p>y:{{ config.y }}</p>
       </el-row>
       <el-button @click="loadConfig">testLoad</el-button>
-      <el-button @click="test">click me</el-button>
-      <img ref="testimg">
     </el-card>
   </div>
 </template>
@@ -118,7 +122,8 @@ export default {
         actualHeight: 0,
         ratio: 0
       },
-      isSettingConfig: false
+      isSettingConfig: false,
+      savedConfigs: []
     }
   },
   computed: {
@@ -210,6 +215,9 @@ export default {
       }
     }
   },
+  mounted(){
+    this.fetchConfigs()
+  },
   methods: {
     posChange({ bg, small }) {
       Object.assign(this.bgConfig, bg)
@@ -254,18 +262,35 @@ export default {
       const height = this.smallConfig.height * this.computedConfig.ratio / this.bgConfig.ratio
       return watermarkImage(this.bgimg, this.smallimg, x, y, width, height)
     },
-    async test() {
-      this.$refs.testimg.src = await this.getImage()
-    },
-    loadConfig(){
-      let config = {"posType":"ratio","rowRefer":"right","colRefer":"bottom","x":0.26625,"y":0.24334319526627213,"smallRatio":0.2475,"smallRatioRefer":"width"}
+    loadConfig(config){
       console.log(JSON.stringify(this.config))
       this.isSettingConfig = true
       Object.assign(this.config, config)
       this.$nextTick(() => {
         this.isSettingConfig = false
       })
-    }
+    },
+    async fetchConfigs(){
+      let {data} = await this.$axios.get('./api/configs')
+      this.savedConfigs = data
+    },
+        querySearchAsync(query, cb){
+      if(!query){
+        query = ''
+      }
+      let tmp = this.savedConfigs.filter(e => e.indexOf(query) !== -1).map(e => {
+        return {
+          value: e
+        }
+      })
+      this.query = query
+      cb(tmp)
+    },
+    async handleSelect(obj){
+      let src = 'configs/' + obj.value.split('/').map(e => encodeURIComponent(e)).join('/')
+      let {data} = await this.$axios.get(src)
+      this.loadConfig(data)
+    },
   },
 }
 </script>

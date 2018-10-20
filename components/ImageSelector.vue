@@ -1,6 +1,6 @@
 <template>
   <div
-    :style="`width: ${width}px; height: ${height}px;`"
+    :style="`width: ${width}px; height: ${curHeight}px;`"
     class="image-selector"
     @click="selectImage">
     <div
@@ -45,6 +45,15 @@ export default {
       image_height: 0
     }
   },
+  computed:{
+    curHeight(){
+      if(this.selected){
+        return this.image_height
+      }else{
+        return this.height
+      }
+    }
+  },
   methods: {
     selectImage() {
       this.$refs.file.click()
@@ -64,7 +73,7 @@ export default {
         this.$emit('selected',this.image_url)
       }
     }
-  }
+  },
 }
 </script>
 <style lang="scss" scoped>

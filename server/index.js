@@ -1,6 +1,8 @@
 
 const express = require('express')
 const consola = require('consola')
+const bodyParser = require('body-parser')
+const jsonParser = bodyParser.json()
 const api = require('./api')
 const { Nuxt, Builder } = require('nuxt')
 const app = express()
@@ -22,6 +24,7 @@ async function start() {
     const builder = new Builder(nuxt)
     await builder.build()
   }
+  app.use(jsonParser)
   //inject apis
   api(app)
   // Give nuxt middleware to express

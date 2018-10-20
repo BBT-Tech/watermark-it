@@ -1,54 +1,52 @@
 <template>
   <div class="container">
-    <el-steps
-      :active="step"
-      finish-status="success"
-      align-center>
-      <el-step
-        title="选择底图"
-        style="cursor: pointer;"
-        @click.native="goTo(0)" />
-      <el-step
-        title="选择水印"
-        style="cursor: pointer;"
-        @click.native="goTo(1)" />
-      <el-step
-        title="选择配置"
-        style="cursor: pointer;"
-        @click.native="goTo(2)" />
-      <el-step
-        title="完成"
-        style="cursor: pointer;"
-        @click.native="goTo(3)" />
-    </el-steps>
-    <div
-      v-show="step === 0"
-      class="center-div">
-      <ImageSelector
-        @selected="onBgChange"
-      />
+    <div class="center-div">
+      <el-steps
+        :active="step"
+        finish-status="success"
+        align-center>
+        <el-step
+          title="选择底图"
+          style="cursor: pointer;"
+          @click.native="goTo(0)" />
+        <el-step
+          title="选择水印"
+          style="cursor: pointer;"
+          @click.native="goTo(1)" />
+        <el-step
+          title="选择配置"
+          style="cursor: pointer;"
+          @click.native="goTo(2)" />
+        <el-step
+          title="完成"
+          style="cursor: pointer;"
+          @click.native="goTo(3)" />
+      </el-steps>
+      <div class="module-container">
+        <div v-show="step === 0">
+          <ImageSelector @selected="onBgChange" />
+        </div>
+        <div v-show="step === 1">
+          <WatermarkSelector @selected="onSmallChange" />
+        </div>
+        <div v-show="step === 2">
+          <WatermarkPanel
+            ref="watermark-panel"
+            :smallimg="watermarkUrl"
+            :bgimg="bgImageUrl"/>
+        </div>
+        <div v-show="step === 3">
+          <img
+            :src="finishImageUrl"
+            style="max-width: 100%">
+        </div>
+      </div>
       <el-button
         :disabled="!couldGoNext"
+        style="float: right;"
         @click="goNext">下一步</el-button>
     </div>
-    <div
-      v-show="step === 1"
-      class="center-div">
-      <WatermarkSelector @selected="onSmallChange" />
-      <el-button
-        :disabled="!couldGoNext"
-        @click="goNext">下一步</el-button>
-    </div>
-    <div
-      v-show="step === 2"
-      class="center-div">
-      <WatermarkPanel
-        :smallimg="watermarkUrl"
-        :bgimg="bgImageUrl"/>
-      <el-button
-        :disabled="!couldGoNext"
-        @click="goNext">下一步</el-button>
-    </div>
+
   </div>
 </template>
 
@@ -67,7 +65,8 @@ export default {
       step: 0,
       maxStep: 0,
       bgImageUrl: '',
-      watermarkUrl: ''
+      watermarkUrl: '',
+      finishImageUrl: ''
     }
   },
   computed: {
@@ -77,6 +76,8 @@ export default {
           return this.bgImageUrl !== ''
         case 1:
           return this.watermarkUrl !== ''
+        case 2:
+          return true
       }
       return false
     }
@@ -87,7 +88,11 @@ export default {
       if (newVal > this.maxStep) {
         this.maxStep = newVal
       }
-
+      if(newVal === 3){
+        this.$refs['watermark-panel'].getImage().then(e => {
+          this.finishImageUrl = e
+        })
+      }
     }
   },
   methods: {
@@ -99,10 +104,10 @@ export default {
     goNext() {
       this.step++
     },
-    onBgChange(src){
+    onBgChange(src) {
       this.bgImageUrl = src
     },
-    onSmallChange(src){
+    onSmallChange(src) {
       this.watermarkUrl = src
     }
   },
@@ -112,9 +117,15 @@ export default {
 <style lang="scss" scoped>
 .container {
   min-height: 100vh;
+  width: 100%;
   .center-div {
-    display: flex;
-    justify-content: center;
+    margin: 0 auto;
+    width: 800px;
+    .module-container{
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
   }
 }
 </style>
