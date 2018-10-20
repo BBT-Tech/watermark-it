@@ -24,7 +24,6 @@
       <span>已选择的水印文件:</span><img
         :src="curImg"
         width="100px">
-      <el-button style="float: right; margin: 10px;">下一步</el-button>
     </div>
 
 </div></template>
@@ -52,6 +51,11 @@ export default {
     },
     curImg(){
       return this.selected_img
+    }
+  },
+  watch:{
+    selected_img(newVal){
+      this.$emit('selected', newVal)
     }
   },
   async mounted(){

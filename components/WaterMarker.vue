@@ -35,7 +35,7 @@ export default {
     },
     height: {
       type: Number,
-      default: 500
+      default: -1
     }
   },
   data() {

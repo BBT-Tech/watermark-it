@@ -61,6 +61,7 @@ export default {
         const size = resizeImage(tmp_image.width,tmp_image.height,this.width,this.height,true)
         this.image_width = size.width
         this.image_height = size.height
+        this.$emit('selected',this.image_url)
       }
     }
   }
