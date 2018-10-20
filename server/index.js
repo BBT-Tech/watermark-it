@@ -1,6 +1,7 @@
 
 const express = require('express')
 const consola = require('consola')
+const api = require('./api')
 const { Nuxt, Builder } = require('nuxt')
 const app = express()
 const host = process.env.HOST || '127.0.0.1'
@@ -21,10 +22,10 @@ async function start() {
     const builder = new Builder(nuxt)
     await builder.build()
   }
-
+  //inject apis
+  api(app)
   // Give nuxt middleware to express
   app.use(nuxt.render)
-
   // Listen the server
   app.listen(port, host)
   consola.ready({
