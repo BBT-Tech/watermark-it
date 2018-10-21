@@ -125,7 +125,8 @@ export default {
       dlLink.dataset.downloadurl = ['image/png', dlLink.download, dlLink.href].join(':');
       document.body.appendChild(dlLink);
       dlLink.click();
-      document.body.removeChild(dlLink);
+      //some browser would not donwload if removed
+      //document.body.removeChild(dlLink);
     }
   },
 }
