@@ -24,7 +24,9 @@
       </el-steps>
       <div class="module-container">
         <div v-show="step === 0">
-          <ImageSelector @selected="onBgChange" />
+          <ImageSelector
+            :multiple="true"
+            @selected="onBgChange" />
         </div>
         <div v-show="step === 1">
           <WatermarkSelector @selected="onSmallChange" />
@@ -33,11 +35,19 @@
           <WatermarkPanel
             ref="watermark-panel"
             :smallimg="watermarkUrl"
-            :bgimg="bgImageUrl" />
+            :bgimg="bgImageUrl"
+            :width="panelWidth" />
         </div>
         <div v-show="step === 3">
+          <el-button
+            :disabled="imageLoading"
+            style="float: right;"
+            type="primary"
+            @click="saveImages">{{ imageLoading?'生成中':'保存' }}</el-button>
           <img
-            :src="finishImageUrl"
+            v-for="(image,index) of images"
+            :src="image"
+            :key="index"
             style="max-width: 100%">
         </div>
       </div>
@@ -47,11 +57,6 @@
         style="float: right;"
         type="success"
         @click="goNext">下一步</el-button>
-      <el-button
-        v-if="step === 3"
-        style="float: right;"
-        type="primary"
-        @click="saveImage">保存</el-button>
     </div>
 
   </div>
@@ -61,6 +66,9 @@
 import ImageSelector from '~/components/ImageSelector.vue'
 import WatermarkSelector from '~/components/WatermarkSelector'
 import WatermarkPanel from '~/components/WatermarkPanel'
+import resizeImage from '~/utils/resizeImage'
+import computeConfig from '~/utils/computeConfig'
+import watermarkImage from '~/utils/watermarkImage'
 export default {
   components: {
     ImageSelector,
@@ -73,7 +81,11 @@ export default {
       maxStep: 0,
       bgImageUrl: '',
       watermarkUrl: '',
-      finishImageUrl: ''
+      finishImageUrl: '',
+      imageUrls: [],
+      panelWidth: 800,
+      images: [],
+      imageLoading: false
     }
   },
   computed: {
@@ -96,9 +108,10 @@ export default {
         this.maxStep = newVal
       }
       if (newVal === 3) {
-        this.$refs['watermark-panel'].getImage().then(e => {
-          this.finishImageUrl = e
-        })
+        // this.$refs['watermark-panel'].getImage().then(e => {
+        //   this.finishImageUrl = e
+        // })
+        this.updatePreviewImages()
       }
     }
   },
@@ -111,15 +124,19 @@ export default {
     goNext() {
       this.step++
     },
-    onBgChange(src) {
-      this.bgImageUrl = src
+    onBgChange(srcs) {
+      this.imageUrls = srcs
+      this.bgImageUrl = ''
+      if (srcs.length > 0) {
+        this.bgImageUrl = srcs[0]
+      }
+
     },
     onSmallChange(src) {
       this.watermarkUrl = src
     },
-    async saveImage() {
+    saveImage(imgUrl) {
       const dlLink = document.createElement('a');
-      const imgUrl = this.finishImageUrl
       dlLink.download = 'export.png';
       dlLink.href = imgUrl;
       dlLink.dataset.downloadurl = ['image/png', dlLink.download, dlLink.href].join(':');
@@ -127,7 +144,41 @@ export default {
       dlLink.click();
       //some browser would not donwload if removed
       //document.body.removeChild(dlLink);
-    }
+    },
+    saveImages(){
+      for(let image of this.images){
+        this.saveImage(image)
+      }
+    },
+    async updatePreviewImages() {
+      this.imageLoading = true
+      const panel = this.$refs['watermark-panel']
+      const BgMaxwidth = this.panelWidth
+      this.images = []
+      const config = panel.getConfig()
+      for (let url of this.imageUrls) {
+
+        const image = await this.loadImg(url)
+        const { ratio } = resizeImage(image.width, image.height, BgMaxwidth, -1)
+        const computedConfig = computeConfig(config, panel.smallConfig.width, panel.smallConfig.height, image.width, image.height, ratio)
+        const x = computedConfig.x / ratio
+        const y = computedConfig.y / ratio
+        const width = panel.smallConfig.width * computedConfig.ratio / ratio
+        const height = panel.smallConfig.height * computedConfig.ratio / ratio
+        const opacity = config.opacity
+        this.images.push(await watermarkImage(url, this.watermarkUrl, x, y, width, height, opacity))
+      }
+      this.imageLoading = false
+
+    },
+    async loadImg(src) {
+      return new Promise((resolve, reject) => {
+        let tmp = new Image()
+        tmp.src = src
+        tmp.onload = () => resolve(tmp)
+        tmp.onerror = (e) => reject(e)
+      })
+    },
   },
 }
 </script>

@@ -20,7 +20,7 @@
     </el-dialog>
     <water-marker
       ref="watermarker"
-      :width="800"
+      :width="width"
       :bgimg="bgimg"
       :smallimg="smallimg"
       @posChange="posChange"
@@ -118,6 +118,7 @@
 <script>
 import WaterMarker from '~/components/WaterMarker'
 import watermarkImage from '~/utils/watermarkImage'
+import computeConfig from '~/utils/computeConfig'
 export default {
   components: {
     WaterMarker
@@ -130,6 +131,10 @@ export default {
     smallimg: {
       type: String,
       default: () => require('~/assets/small.jpg')
+    },
+    width: {
+      type: Number,
+      default: 800
     },
   },
   data() {
@@ -166,36 +171,37 @@ export default {
   },
   computed: {
     computedConfig() {
-      let x = this.config.x
-      let y = this.config.y
-      let width = this.smallConfig.width
-      let height = this.smallConfig.height
-      let ratio = 1
-      if (this.config.posType === 'ratio') {
-        x = this.bgConfig.actualWidth * x
-        y = this.bgConfig.actualHeight * y
-      }
-      if (this.config.rowRefer === 'right') {
-        x = this.bgConfig.actualWidth - x
-      }
-      if (this.config.colRefer === 'bottom') {
-        y = this.bgConfig.actualHeight - y
-      }
-      if (this.config.smallRatioRefer === 'self') {
-        ratio = this.config.smallRatio
-      }
-      if (this.config.smallRatioRefer === 'width') {
-        ratio = this.config.smallRatio * this.bgConfig.actualWidth / width
-      }
-      if (this.config.smallRatioRefer === 'height') {
-        ratio = this.config.smallRatio * this.bgConfig.actualHeight / height
-      }
-      return {
-        x,
-        y,
-        ratio,
-        opacity: this.config.opacity
-      }
+      return computeConfig(this.config,this.smallConfig.width,this.smallConfig.height,this.bgConfig.width,this.bgConfig.height,this.bgConfig.ratio)
+      // let x = this.config.x
+      // let y = this.config.y
+      // let width = this.smallConfig.width
+      // let height = this.smallConfig.height
+      // let ratio = 1
+      // if (this.config.posType === 'ratio') {
+      //   x = this.bgConfig.actualWidth * x
+      //   y = this.bgConfig.actualHeight * y
+      // }
+      // if (this.config.rowRefer === 'right') {
+      //   x = this.bgConfig.actualWidth - x
+      // }
+      // if (this.config.colRefer === 'bottom') {
+      //   y = this.bgConfig.actualHeight - y
+      // }
+      // if (this.config.smallRatioRefer === 'self') {
+      //   ratio = this.config.smallRatio
+      // }
+      // if (this.config.smallRatioRefer === 'width') {
+      //   ratio = this.config.smallRatio * this.bgConfig.actualWidth / width
+      // }
+      // if (this.config.smallRatioRefer === 'height') {
+      //   ratio = this.config.smallRatio * this.bgConfig.actualHeight / height
+      // }
+      // return {
+      //   x,
+      //   y,
+      //   ratio,
+      //   opacity: this.config.opacity
+      // }
     }
   },
   watch: {
@@ -349,6 +355,9 @@ export default {
           type: 'success'
         });
       this.dialogVisible = false
+    },
+    getConfig(){
+      return this.config
     }
   },
 }

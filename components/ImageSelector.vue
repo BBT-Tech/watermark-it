@@ -17,6 +17,7 @@
     </div>
     <input
       ref="file"
+      :multiple="multiple"
       type="file"
       accept="image/*"
       style="display: none;"
@@ -34,6 +35,10 @@ export default {
     height: {
       type: Number,
       default: 500
+    },
+    multiple: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
@@ -45,11 +50,11 @@ export default {
       image_height: 0
     }
   },
-  computed:{
-    curHeight(){
-      if(this.selected){
+  computed: {
+    curHeight() {
+      if (this.selected) {
         return this.image_height
-      }else{
+      } else {
         return this.height
       }
     }
@@ -58,21 +63,35 @@ export default {
     selectImage() {
       this.$refs.file.click()
     },
-    onChangeImage() {
-      let file = this.$refs.file.files[0]
-      const url = URL.createObjectURL(file)
-      const tmp_image = new Image()
-      tmp_image.src = url
-      tmp_image.onload = () => {
-        this.image = file
+    async onChangeImage() {
+      const urls = []
+      for (let file of this.$refs.file.files) {
+        const url = URL.createObjectURL(file)
+        urls.push(url)
+      }
+      if(urls.length > 0){
+        const url = urls[0]
+        const image = await this.loadImg(url)
         this.image_url = url
         this.selected = true
-        const size = resizeImage(tmp_image.width,tmp_image.height,this.width,this.height,true)
+        const size = resizeImage(image.width, image.height, this.width, this.height, true)
         this.image_width = size.width
         this.image_height = size.height
-        this.$emit('selected',this.image_url)
+        this.$emit('selected', urls)
+      }else{
+        this.image_url = ''
+        this.selected = false
       }
-    }
+
+    },
+    async loadImg(src) {
+      return new Promise((resolve, reject) => {
+        let tmp = new Image()
+        tmp.src = src
+        tmp.onload = () => resolve(tmp)
+        tmp.onerror = (e) => reject(e)
+      })
+    },
   },
 }
 </script>
@@ -102,7 +121,7 @@ export default {
     right: 0;
     bottom: 0;
     z-index: 1;
-    img{
+    img {
       margin: 0 auto;
       display: block;
     }
