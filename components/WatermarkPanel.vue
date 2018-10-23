@@ -91,6 +91,17 @@
         </template>
       </el-row>
       <el-row class="setting-row">
+        <template>
+          水印透明度:
+          <el-input-number
+            v-model="config.opacity"
+            :precision="2"
+            :step="0.1"
+            :max="1"
+            :min="0"/>
+        </template>
+      </el-row>
+      <el-row class="setting-row">
         <p>x:{{ config.x }}</p>
         <p>y:{{ config.y }}</p>
       </el-row>
@@ -130,7 +141,8 @@ export default {
         x: 0,
         y: 0,
         smallRatio: 1,
-        smallRatioRefer: 'self'
+        smallRatioRefer: 'self',
+        opacity: 1
       },
       smallConfig: {
         height: 0,
@@ -181,14 +193,15 @@ export default {
       return {
         x,
         y,
-        ratio
+        ratio,
+        opacity: this.config.opacity
       }
     }
   },
   watch: {
     computedConfig(newVal) {
-      console.log(newVal)
       this.$refs.watermarker.setSmallRatio(newVal.ratio)
+      this.$refs.watermarker.setOpacity(newVal.opacity)
       this.$refs.watermarker.setSmallPos(newVal.x, newVal.y)
     },
     "config.posType": function (newVal, oldVal) {

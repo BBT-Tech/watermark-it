@@ -55,6 +55,7 @@ export default {
       canvas_height: 0,
       bgRatio: 1,
       smallRatio: 1,
+      opacity: 1,
       mode: 'resize'
     }
   },
@@ -110,7 +111,10 @@ export default {
       const canvas = this.$refs.canvas
       this.ctx.clearRect(0, 0, canvas.width, canvas.height)
       this.ctx.drawImage(this.bg, 0, 0, this.bgDrawSize.width, this.bgDrawSize.height)
+      this.ctx.save()
+      this.ctx.globalAlpha = this.opacity
       this.ctx.drawImage(this.small, x, y, this.smallDrawSize.width, this.smallDrawSize.height)
+      this.ctx.restore()
       this.ctx.lineWidth = strokeWidth
       this.ctx.strokeStyle = 'red'
       this.ctx.strokeRect(x + this.smallDrawSize.width, y + this.smallDrawSize.height, 1, 1)
@@ -202,7 +206,8 @@ export default {
           height: this.small_height,
           ratio: this.smallRatio, /// this.bgRatio,
           x: this.cur_offset.x,// / this.bgRatio,
-          y: this.cur_offset.y /// this.bgRatio
+          y: this.cur_offset.y, /// this.bgRatio
+          opacity: this.opacity
         }
       }
     },
@@ -211,6 +216,9 @@ export default {
     },
     setBgRatio(ratio){
       this.bgRatio = ratio
+    },
+    setOpacity(opacity){
+      this.opacity = opacity
     },
     setSmallPos(x,y){
       x = x//*this.bgRatio
