@@ -1,5 +1,5 @@
 <template>
-  <div class="watermark-panel">
+  <div class="picture-clipper">
     <el-dialog
       :visible.sync="dialogVisible"
       title="输入配置名字"
@@ -23,6 +23,7 @@
       :width="width"
       :bgimg="bgimg"
       :smallimg="smallimg"
+      :allow-outside="false"
       @posChange="posChange"
       @ready="watermarkerReady" />
     <el-card class="box-card">
@@ -35,8 +36,7 @@
         :fetch-suggestions="querySearchAsync"
         placeholder="搜索已有配置文件"
         style="width: 99%;display: block; margin: 10px auto;"
-        @select="handleSelect"
-      />
+        @select="handleSelect" />
       <el-row class="setting-row">
         定位方式：
         <template>
@@ -72,7 +72,7 @@
       </el-row>
       <el-row class="setting-row">
         <template>
-          水印比例参照：
+          裁剪框比例参照：
           <el-radio
             v-model="config.smallRatioRefer"
             label="self">自身</el-radio>
@@ -86,30 +86,40 @@
       </el-row>
       <el-row class="setting-row">
         <template>
-          水印缩放比例：(可拖动右下角红点缩放)
+          裁剪框缩放比例：(可拖动右下角红点缩放)
           <el-input v-model="config.smallRatio" />
         </template>
       </el-row>
       <el-row class="setting-row">
         <template>
-          水印透明度:
+          裁剪框宽高比
           <el-input-number
-            v-model="config.opacity"
-            :precision="2"
-            :step="0.1"
-            :max="1"
-            :min="0"/>
+            v-model="config.aspectRatio"
+            :precision="4"
+            :step="0.01"
+            :min="0" />
         </template>
       </el-row>
       <el-row class="setting-row">
-        <p>x:{{ config.x }}</p>
-        <p>y:{{ config.y }}</p>
+        <template>
+          横向定位:
+          <el-input v-model="config.x" />
+        </template>
+      </el-row>
+      <el-row class="setting-row">
+        <template>
+          纵向定位:
+          <el-input v-model="config.y" />
+        </template>
       </el-row>
       <el-row style="display:flex; justify-content: center;">
+        <el-button @click="test"/>
         <el-button
           type="primary"
           plain
           @click="dialogVisible = true">保存配置文件</el-button>
+        <el-button @click="test">测试</el-button>
+        <img ref="test">
       </el-row>
 
     </el-card>
@@ -119,6 +129,9 @@
 import WaterMarker from '~/components/WaterMarker'
 import watermarkImage from '~/utils/watermarkImage'
 import computeConfig from '~/utils/computeConfig'
+import clipImage from '~/utils/clipImage'
+import resizeImageCanvas from '~/utils/resizeImageCanvas'
+const rect = require('~/assets/rect.svg')
 export default {
   components: {
     WaterMarker
@@ -127,10 +140,6 @@ export default {
     bgimg: {
       type: String,
       default: () => require('~/assets/bg.png')
-    },
-    smallimg: {
-      type: String,
-      default: () => require('~/assets/small.jpg')
     },
     width: {
       type: Number,
@@ -147,7 +156,8 @@ export default {
         y: 0,
         smallRatio: 1,
         smallRatioRefer: 'self',
-        opacity: 1
+        opacity: 1,
+        aspectRatio: 1
       },
       smallConfig: {
         height: 0,
@@ -166,12 +176,13 @@ export default {
       isSettingConfig: false,
       dialogVisible: false,
       savedConfigs: [],
-      configSaveName: ''
+      configSaveName: '',
+      smallimg: rect
     }
   },
   computed: {
     computedConfig() {
-      return computeConfig(this.config,this.smallConfig.width,this.smallConfig.height,this.bgConfig.width,this.bgConfig.height,this.bgConfig.ratio)
+      return computeConfig(this.config, this.smallConfig.width, this.smallConfig.height, this.bgConfig.width, this.bgConfig.height, this.bgConfig.ratio)
       // let x = this.config.x
       // let y = this.config.y
       // let width = this.smallConfig.width
@@ -258,9 +269,12 @@ export default {
         }
         this.config.smallRatio = targetRatio
       }
+    },
+    "config.aspectRatio": function (newVal, oldVal) {
+      this.setAspect(newVal)
     }
   },
-  mounted(){
+  mounted() {
     this.fetchConfigs()
   },
   methods: {
@@ -304,21 +318,25 @@ export default {
       const y = this.computedConfig.y / this.bgConfig.ratio
       const width = this.smallConfig.width * this.computedConfig.ratio / this.bgConfig.ratio
       const height = this.smallConfig.height * this.computedConfig.ratio / this.bgConfig.ratio
-      return watermarkImage(this.bgimg, this.smallimg, x, y, width, height)
+      return clipImage(this.bgimg, x, y, width, height)
     },
-    loadConfig(config){
-      this.isSettingConfig = true
-      Object.assign(this.config, config)
+    async loadConfig(config) {
+      await this.setAspect(config.aspectRatio)
       this.$nextTick(() => {
-        this.isSettingConfig = false
+        this.isSettingConfig = true
+        Object.assign(this.config, config)
+        this.$nextTick(() => {
+          this.isSettingConfig = false
+        })
       })
+
     },
-    async fetchConfigs(){
-      let {data} = await this.$axios.get('./api/configs/watermark')
+    async fetchConfigs() {
+      let { data } = await this.$axios.get('./api/configs/clipper')
       this.savedConfigs = data
     },
-    querySearchAsync(query, cb){
-      if(!query){
+    querySearchAsync(query, cb) {
+      if (!query) {
         query = ''
       }
       let tmp = this.savedConfigs.filter(e => e.indexOf(query) !== -1).map(e => {
@@ -329,16 +347,16 @@ export default {
       this.query = query
       cb(tmp)
     },
-    async handleSelect(obj){
-      let src = 'configs/watermark/' + obj.value.split('/').map(e => encodeURIComponent(e)).join('/')
-      let {data} = await this.$axios.get(src)
+    async handleSelect(obj) {
+      let src = 'configs/clipper/' + obj.value.split('/').map(e => encodeURIComponent(e)).join('/')
+      let { data } = await this.$axios.get(src)
       this.loadConfig(data)
     },
-    async saveConfig(){
-      if(this.configSaveName === ''){
+    async saveConfig() {
+      if (this.configSaveName === '') {
         return
       }
-      let {data} = await this.$axios.post('./api/configs', {
+      let { data } = await this.$axios.post('./api/configs/clipper', {
         name: this.configSaveName,
         config: this.config
       }).catch(e => {
@@ -350,20 +368,42 @@ export default {
       })
       await this.fetchConfigs()
       this.$notify({
-          title: '保存成功',
-          message: '可以在下次复用该配置文件噢',
-          type: 'success'
-        });
+        title: '保存成功',
+        message: '可以在下次复用该配置文件噢',
+        type: 'success'
+      });
       this.dialogVisible = false
     },
-    getConfig(){
+    getConfig() {
       return this.config
+    },
+    async test() {
+      const url = await this.getImage()
+      this.$refs.test.src = url
+    },
+    async setAspect(ratio) {
+      let width = 100 * ratio
+      let height = 100
+      this.smallimg = await resizeImageCanvas(rect, width, height)
+    },
+    onekeyCenter(){
+      const config = {
+        posType: 'absolute',
+        rowRefer: 'left',
+        colRefer: 'top',
+        x: 0,
+        y: 0,
+        smallRatio: 1,
+        smallRatioRefer: 'self',
+        opacity: 1,
+        aspectRatio: 1
+      }
     }
   },
 }
 </script>
 <style lang="scss" scoped>
-.watermark-panel {
+.watermark-clipper {
   .setting-row {
     margin: 10px 0;
   }

@@ -10,10 +10,10 @@
 
 </template>
 <script>
-function isInRect(x,y,left,top,width,height){
-  if(x >= left && y >= top && x <= left+width && y <= top+height){
+function isInRect(x, y, left, top, width, height) {
+  if (x >= left && y >= top && x <= left + width && y <= top + height) {
     return true
-  }else{
+  } else {
     return false
   }
 }
@@ -36,6 +36,14 @@ export default {
     height: {
       type: Number,
       default: -1
+    },
+    allowOutside: {
+      type: Boolean,
+      default: true
+    },
+    addRect: {
+      type: Boolean,
+      default: true
     }
   },
   data() {
@@ -118,6 +126,11 @@ export default {
       this.ctx.lineWidth = strokeWidth
       this.ctx.strokeStyle = 'red'
       this.ctx.strokeRect(x + this.smallDrawSize.width, y + this.smallDrawSize.height, 1, 1)
+      if(this.addRect){
+        this.ctx.lineWidth = 2
+        this.ctx.strokeStyle = 'green'
+        this.ctx.strokeRect(x, y,this.smallDrawSize.width,this.smallDrawSize.height)
+      }
       this.cur_offset.x = x
       this.cur_offset.y = y
     },
@@ -125,12 +138,12 @@ export default {
       let x = e.offsetX
       let y = e.offsetY
       const canvas = this.$refs.canvas
-      if(isInRect(x,y,this.cur_offset.x+ this.smallDrawSize.width-strokeWidth,this.cur_offset.y+ this.smallDrawSize.height-strokeWidth,2*strokeWidth,2*strokeWidth)){
+      if (isInRect(x, y, this.cur_offset.x + this.smallDrawSize.width - strokeWidth, this.cur_offset.y + this.smallDrawSize.height - strokeWidth, 2 * strokeWidth, 2 * strokeWidth)) {
         this.start_offset.x = x - this.cur_offset.x
         this.start_offset.y = y - this.cur_offset.y
         this.mode = 'resize'
         canvas.onmousemove = this.onmousemove
-      }else if (isInRect(x,y,this.cur_offset.x,this.cur_offset.y,this.smallDrawSize.width,this.smallDrawSize.height)) {
+      } else if (isInRect(x, y, this.cur_offset.x, this.cur_offset.y, this.smallDrawSize.width, this.smallDrawSize.height)) {
         this.start_offset.x = x - this.cur_offset.x
         this.start_offset.y = y - this.cur_offset.y
         this.mode = 'move'
@@ -142,32 +155,49 @@ export default {
     },
     onmouseup(e) {
       this.$refs.canvas.onmousemove = null
-      this.$emit('posChange',this.getConfig())
+      this.$emit('posChange', this.getConfig())
     },
     onmousemove(e) {
       const canvas = this.$refs.canvas
       let x = e.offsetX - this.start_offset.x
       let y = e.offsetY - this.start_offset.y
-      if (x > canvas.width) {
-        x = canvas.width
+      if (this.allowOutside) {
+        if (x > canvas.width) {
+          x = canvas.width
+        }
+        if (y > canvas.height) {
+          y = canvas.height
+        }
+        if (x < -1 * this.small_width) {
+          x = -1 * this.small_width
+        }
+        if (y < -1 * this.small_height) {
+          y = -1 * this.small_height
+        }
+
+      } else {
+        if (x > canvas.width - this.small_width) {
+          x = canvas.width - this.small_width
+        }
+        if (y > canvas.height - this.small_height) {
+          y = canvas.height - this.small_height
+        }
+        if (x < 0) {
+          x = 0
+        }
+        if (y < 0) {
+          y = 0
+        }
       }
-      if (y > canvas.height) {
-        y = canvas.height
-      }
-      if (x < -1*this.small_width) {
-        x = -1*this.small_width
-      }
-      if (y < -1 * this.small_height) {
-        y = -1 * this.small_height
-      }
-      if(this.mode === 'move'){
+
+      if (this.mode === 'move') {
         this.redraw(x, y)
-      }else{
-        let widthRatio = (e.offsetX - this.cur_offset.x)/this.small_width
-        let heightRatio = (e.offsetY - this.cur_offset.y)/this.small_height
-        let ratio =Math.max(widthRatio,heightRatio)
-        this.smallRatio=ratio
-        this.redraw(this.cur_offset.x,this.cur_offset.y)
+      } else {
+        let widthRatio = (e.offsetX - this.cur_offset.x) / this.small_width
+        let heightRatio = (e.offsetY - this.cur_offset.y) / this.small_height
+        let ratio = Math.max(widthRatio, heightRatio)
+        this.smallRatio = ratio
+        this.redraw(this.cur_offset.x, this.cur_offset.y)
       }
 
     },
@@ -211,23 +241,23 @@ export default {
         }
       }
     },
-    setSmallRatio(ratio){
+    setSmallRatio(ratio) {
       this.smallRatio = ratio //* this.bgRatio
     },
-    setBgRatio(ratio){
+    setBgRatio(ratio) {
       this.bgRatio = ratio
     },
-    setOpacity(opacity){
+    setOpacity(opacity) {
       this.opacity = opacity
     },
-    setSmallPos(x,y){
+    setSmallPos(x, y) {
       x = x//*this.bgRatio
       y = y//* this.bgRatio
       this.$nextTick(() => {
-        this.redraw(x,y)
+        this.redraw(x, y)
       })
     },
-    resetSize(){
+    resetSize() {
       this.bgRatio = resizeImage(this.bg_width, this.bg_height, this.width, this.height).ratio
       this.smallRatio = resizeImage(this.small_width, this.small_height, 100, 100).ratio
     }

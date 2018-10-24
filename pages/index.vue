@@ -10,17 +10,21 @@
           style="cursor: pointer;"
           @click.native="goTo(0)" />
         <el-step
-          title="选择水印"
+          title="裁剪图片"
           style="cursor: pointer;"
           @click.native="goTo(1)" />
         <el-step
-          title="选择配置"
+          title="选择水印"
           style="cursor: pointer;"
           @click.native="goTo(2)" />
         <el-step
-          title="完成"
+          title="选择配置"
           style="cursor: pointer;"
           @click.native="goTo(3)" />
+        <el-step
+          title="完成"
+          style="cursor: pointer;"
+          @click.native="goTo(4)" />
       </el-steps>
       <div class="module-container">
         <div v-show="step === 0">
@@ -29,16 +33,22 @@
             @selected="onBgChange" />
         </div>
         <div v-show="step === 1">
-          <WatermarkSelector @selected="onSmallChange" />
+          <picture-clipper
+            ref="picture-clipper"
+            :bgimg="bgImageUrl"
+            :width="panelWidth" />
         </div>
         <div v-show="step === 2">
+          <WatermarkSelector @selected="onSmallChange" />
+        </div>
+        <div v-show="step === 3">
           <WatermarkPanel
             ref="watermark-panel"
             :smallimg="watermarkUrl"
             :bgimg="bgImageUrl"
             :width="panelWidth" />
         </div>
-        <div v-show="step === 3">
+        <div v-show="step === 4">
           <el-button
             :disabled="imageLoading"
             style="float: right;"
@@ -66,6 +76,7 @@
 import ImageSelector from '~/components/ImageSelector.vue'
 import WatermarkSelector from '~/components/WatermarkSelector'
 import WatermarkPanel from '~/components/WatermarkPanel'
+import PictureClipper from '~/components/PictureClipper'
 import resizeImage from '~/utils/resizeImage'
 import computeConfig from '~/utils/computeConfig'
 import watermarkImage from '~/utils/watermarkImage'
@@ -73,7 +84,8 @@ export default {
   components: {
     ImageSelector,
     WatermarkPanel,
-    WatermarkSelector
+    WatermarkSelector,
+    PictureClipper
   },
   data() {
     return {
@@ -94,8 +106,10 @@ export default {
         case 0:
           return this.bgImageUrl !== ''
         case 1:
-          return this.watermarkUrl !== ''
+          return true
         case 2:
+          return this.watermarkUrl !== ''
+        case 3:
           return true
       }
       return false
@@ -197,4 +211,5 @@ export default {
     }
   }
 }
+
 </style>

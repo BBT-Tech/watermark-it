@@ -29,26 +29,42 @@ async function scandir(dir, prefix = '') {
 }
 module.exports = function (app) {
   app.use('/watermarks', express.static(path.resolve(__dirname,'./uploads/watermarks')))
-  app.use('/configs', express.static(path.resolve(__dirname,'./uploads/configs')))
+  app.use('/configs/watermark', express.static(path.resolve(__dirname,'./uploads/configs/watermark')))
+  app.use('/configs/clipper', express.static(path.resolve(__dirname,'./uploads/configs/clipper')))
   app.get('/api/watermarks', async (req, res) => {
     const files = await scandir(path.resolve(__dirname, './uploads/watermarks'))
     res.send(files)
   })
-  app.get('/api/configs', async(req,res) => {
-    const files = await scandir(path.resolve(__dirname, './uploads/configs'))
+  app.get('/api/configs/watermark', async(req,res) => {
+    const files = await scandir(path.resolve(__dirname, './uploads/configs/watermark'))
     res.send(files)
   })
-  app.post('/api/configs', async(req,res) => {
+  app.post('/api/configs/watermark', async(req,res) => {
     const name = req.body.name || ''
     const config = req.body.config
     if(name === '' || (typeof config) !== 'object'){
       res.status(400).send('name and config is needed')
     }else{
-      const baseDir = path.resolve(__dirname, './uploads/configs')
+      const baseDir = path.resolve(__dirname, './uploads/configs/watermark')
       const filename = path.basename(path.resolve(baseDir,name)) + '.json'
       fs.writeFileSync(path.resolve(baseDir,filename), JSON.stringify(config))
       res.status(200).send('')
     }
-
+  })
+  app.get('/api/configs/clipper', async(req,res) => {
+    const files = await scandir(path.resolve(__dirname, './uploads/configs/clipper'))
+    res.send(files)
+  })
+  app.post('/api/configs/clipper', async(req,res) => {
+    const name = req.body.name || ''
+    const config = req.body.config
+    if(name === '' || (typeof config) !== 'object'){
+      res.status(400).send('name and config is needed')
+    }else{
+      const baseDir = path.resolve(__dirname, './uploads/configs/clipper')
+      const filename = path.basename(path.resolve(baseDir,name)) + '.json'
+      fs.writeFileSync(path.resolve(baseDir,filename), JSON.stringify(config))
+      res.status(200).send('')
+    }
   })
 }

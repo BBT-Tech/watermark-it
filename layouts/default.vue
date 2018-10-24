@@ -1,5 +1,19 @@
 <template>
   <div>
+    <!-- <div class="background">
+      <img
+        class="tizi1"
+        src="~/assets/1.png"
+        height="500">
+      <img
+        class="tizi2"
+        src="~/assets/2.png"
+        height="500">
+      <img
+        class="tizi3"
+        src="~/assets/3.png"
+        height="500">
+    </div> -->
     <nuxt/>
   </div>
 </template>
@@ -16,40 +30,32 @@ html {
   -webkit-font-smoothing: antialiased;
   box-sizing: border-box;
 }
+.background{
+  position: fixed;
+  left:0;
+  right:0;
+  top:0;
+  bottom:0;
+  z-index: 1;
+  background-image: url('~/assets/grass.jpg');
 
-*,
-*:before,
-*:after {
-  box-sizing: border-box;
-  margin: 0;
 }
-
-.button--green {
-  display: inline-block;
-  border-radius: 4px;
-  border: 1px solid #3b8070;
-  color: #3b8070;
-  text-decoration: none;
-  padding: 10px 30px;
+.background .tizi1{
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%) translateX(-50%);
 }
-
-.button--green:hover {
-  color: #fff;
-  background-color: #3b8070;
+.background .tizi2{
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%) translateX(50%);
 }
-
-.button--grey {
-  display: inline-block;
-  border-radius: 4px;
-  border: 1px solid #35495e;
-  color: #35495e;
-  text-decoration: none;
-  padding: 10px 30px;
-  margin-left: 15px;
-}
-
-.button--grey:hover {
-  color: #fff;
-  background-color: #35495e;
+.background .tizi3{
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateY(50%) translateX(-50%);
 }
 </style>
