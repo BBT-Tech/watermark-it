@@ -45,7 +45,7 @@
           <WatermarkPanel
             ref="watermark-panel"
             :smallimg="watermarkUrl"
-            :bgimg="bgImageUrl"
+            :bgimg="clippedImage"
             :width="panelWidth" />
         </div>
         <div v-show="step === 4">
@@ -62,7 +62,7 @@
         </div>
       </div>
       <el-button
-        v-if="step < 3"
+        v-if="step < 4"
         :disabled="!couldGoNext"
         style="float: right;"
         type="success"
@@ -80,6 +80,7 @@ import PictureClipper from '~/components/PictureClipper'
 import resizeImage from '~/utils/resizeImage'
 import computeConfig from '~/utils/computeConfig'
 import watermarkImage from '~/utils/watermarkImage'
+import clipImage from '~/utils/clipImage'
 export default {
   components: {
     ImageSelector,
@@ -97,7 +98,8 @@ export default {
       imageUrls: [],
       panelWidth: 800,
       images: [],
-      imageLoading: false
+      imageLoading: false,
+      clippedImage: ''
     }
   },
   computed: {
@@ -117,11 +119,14 @@ export default {
 
   },
   watch: {
-    step(newVal) {
+    async step(newVal) {
       if (newVal > this.maxStep) {
         this.maxStep = newVal
       }
-      if (newVal === 3) {
+      if(newVal === 3){
+        this.clippedImage = await this.$refs['picture-clipper'].getImage()
+      }
+      if (newVal === 4) {
         // this.$refs['watermark-panel'].getImage().then(e => {
         //   this.finishImageUrl = e
         // })
@@ -149,7 +154,7 @@ export default {
     onSmallChange(src) {
       this.watermarkUrl = src
     },
-    saveImage(imgUrl) {
+    saveImage(imgUrl) {isFinite
       const dlLink = document.createElement('a');
       dlLink.download = 'export.png';
       dlLink.href = imgUrl;
@@ -164,14 +169,31 @@ export default {
         this.saveImage(image)
       }
     },
+    async getClippedImages(){
+      const panel = this.$refs['picture-clipper']
+      const BgMaxwidth = this.panelWidth
+      const ret = []
+      const config = panel.getConfig()
+      for (let url of this.imageUrls) {
+        const image = await this.loadImg(url)
+        const { ratio } = resizeImage(image.width, image.height, BgMaxwidth, -1)
+        const computedConfig = computeConfig(config, panel.smallConfig.width, panel.smallConfig.height, image.width, image.height, ratio)
+        const x = computedConfig.x / ratio
+        const y = computedConfig.y / ratio
+        const width = panel.smallConfig.width * computedConfig.ratio / ratio
+        const height = panel.smallConfig.height * computedConfig.ratio / ratio
+        ret.push(await clipImage(url, x, y, width, height))
+      }
+      return ret
+    },
     async updatePreviewImages() {
       this.imageLoading = true
       const panel = this.$refs['watermark-panel']
       const BgMaxwidth = this.panelWidth
       this.images = []
       const config = panel.getConfig()
-      for (let url of this.imageUrls) {
-
+      const clippedImages = await this.getClippedImages(this.imageUrls)
+      for (let url of clippedImages) {
         const image = await this.loadImg(url)
         const { ratio } = resizeImage(image.width, image.height, BgMaxwidth, -1)
         const computedConfig = computeConfig(config, panel.smallConfig.width, panel.smallConfig.height, image.width, image.height, ratio)
