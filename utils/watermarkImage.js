@@ -13,8 +13,9 @@ export default async function(bgSrc,smallSrc,posX,posY,smallWidth,smallHeight, o
   canvas.width = imageBg.width
   canvas.height = imageBg.height
   const ctx = canvas.getContext('2d')
-  ctx.globalAlpha = opacity
+  ctx.globalAlpha = 1
   ctx.drawImage(imageBg,0,0,imageBg.width,imageBg.height)
+  ctx.globalAlpha = opacity
   ctx.drawImage(imageSmall,posX,posY,smallWidth,smallHeight)
   return canvas.toDataURL("image/png",1)
 }
