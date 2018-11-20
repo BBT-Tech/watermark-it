@@ -35,8 +35,7 @@
         :fetch-suggestions="querySearchAsync"
         placeholder="搜索已有配置文件"
         style="width: 99%;display: block; margin: 10px auto;"
-        @select="handleSelect"
-      />
+        @select="handleSelect" />
       <el-row class="setting-row">
         定位方式：
         <template>
@@ -57,6 +56,9 @@
           <el-radio
             v-model="config.rowRefer"
             label="right">右边</el-radio>
+          <el-radio
+            v-model="config.rowRefer"
+            label="middle">中位线</el-radio>
         </template>
       </el-row>
       <el-row class="setting-row">
@@ -68,6 +70,9 @@
           <el-radio
             v-model="config.colRefer"
             label="bottom">底边</el-radio>
+          <el-radio
+            v-model="config.colRefer"
+            label="middle">中位线</el-radio>
         </template>
       </el-row>
       <el-row class="setting-row">
@@ -98,12 +103,27 @@
             :precision="2"
             :step="0.1"
             :max="1"
-            :min="0"/>
+            :min="0" />
         </template>
       </el-row>
       <el-row class="setting-row">
-        <p>x:{{ config.x }}</p>
-        <p>y:{{ config.y }}</p>
+        <template>
+          横向定位:
+          <el-input-number
+            v-model="config.x"
+            :precision="2"
+            :step="0.1"/>
+        </template>
+      </el-row>
+      <el-row class="setting-row">
+        <template>
+          纵向定位:
+          <el-input-number
+            v-model="config.y"
+            :precision="2"
+            :step="0.1"
+          />
+        </template>
       </el-row>
       <el-row style="display:flex; justify-content: center;">
         <el-button
@@ -171,7 +191,7 @@ export default {
   },
   computed: {
     computedConfig() {
-      return computeConfig(this.config,this.smallConfig.width,this.smallConfig.height,this.bgConfig.width,this.bgConfig.height,this.bgConfig.ratio)
+      return computeConfig(this.config, this.smallConfig.width, this.smallConfig.height, this.bgConfig.width, this.bgConfig.height, this.bgConfig.ratio)
       // let x = this.config.x
       // let y = this.config.y
       // let width = this.smallConfig.width
@@ -224,19 +244,44 @@ export default {
     },
     "config.rowRefer": function (newVal, oldVal) {
       if (newVal !== oldVal && this.isSettingConfig === false) {
-        if (this.config.posType === 'ratio') {
-          this.config.x = 1 - this.config.x
+        if (newVal === 'middle' || oldVal === 'middle') {
+          if (newVal === 'middle') {
+            this.config.x = 0
+          } else {
+            if (this.config.posType === 'ratio') {
+              this.config.x = 0.5
+            } else {
+              this.config.x = this.bgConfig.actualWidth * 0.5
+            }
+          }
         } else {
-          this.config.x = this.bgConfig.actualWidth - this.config.x
+          if (this.config.posType === 'ratio') {
+            this.config.x = 1 - this.config.x
+          } else {
+            this.config.x = this.bgConfig.actualWidth - this.config.x
+          }
         }
+
       }
     },
     "config.colRefer": function (newVal, oldVal) {
       if (newVal !== oldVal && this.isSettingConfig === false) {
-        if (this.config.posType === 'ratio') {
-          this.config.y = 1 - this.config.y
+        if (newVal === 'middle' || oldVal === 'middle') {
+          if (newVal === 'middle') {
+            this.config.y = 0
+          } else {
+            if (this.config.posType === 'ratio') {
+              this.config.y = 0.5
+            } else {
+              this.config.y = this.bgConfig.actualHeight * 0.5
+            }
+          }
         } else {
-          this.config.y = this.bgConfig.actualHeight - this.config.y
+          if (this.config.posType === 'ratio') {
+            this.config.y = 1 - this.config.y
+          } else {
+            this.config.y = this.bgConfig.actualHeight - this.config.y
+          }
         }
       }
     },
@@ -258,9 +303,23 @@ export default {
         }
         this.config.smallRatio = targetRatio
       }
-    }
+    },
+    // "config.x": function (newVal) {
+    //   let tmp = parseFloat(newVal)
+    //   if (tmp === NaN) {
+    //     tmp = 0
+    //   }
+    //   this.config.x = tmp
+    // },
+    // "config.y": function (newVal) {
+    //   let tmp = parseFloat(newVal)
+    //   if (tmp === NaN) {
+    //     tmp = 0
+    //   }
+    //   this.config.y = tmp
+    // }
   },
-  mounted(){
+  mounted() {
     this.fetchConfigs()
   },
   methods: {
@@ -277,6 +336,14 @@ export default {
       if (this.config.colRefer === 'bottom') {
         y = this.bgConfig.actualHeight - y
       }
+      if (this.config.rowRefer === 'middle') {
+        x = x-(this.bgConfig.actualWidth / 2 - this.smallConfig.width * this.config.smallRatio  / 2)
+      }
+      if (this.config.colRefer === 'middle') {
+        y =y-(this.bgConfig.actualHeight / 2 - this.smallConfig.height * this.config.smallRatio / 2)
+      }
+      console.log(this.bgConfig.actualWidth,this.smallConfig.width,this.config.smallRatio)
+      console.log(x,y)
       if (this.config.posType === 'ratio') {
         x = x / this.bgConfig.actualWidth
         y = y / this.bgConfig.actualHeight
@@ -306,19 +373,19 @@ export default {
       const height = this.smallConfig.height * this.computedConfig.ratio / this.bgConfig.ratio
       return watermarkImage(this.bgimg, this.smallimg, x, y, width, height)
     },
-    loadConfig(config){
+    loadConfig(config) {
       this.isSettingConfig = true
       Object.assign(this.config, config)
       this.$nextTick(() => {
         this.isSettingConfig = false
       })
     },
-    async fetchConfigs(){
-      let {data} = await this.$axios.get('./api/configs/watermark')
+    async fetchConfigs() {
+      let { data } = await this.$axios.get('./api/configs/watermark')
       this.savedConfigs = data
     },
-    querySearchAsync(query, cb){
-      if(!query){
+    querySearchAsync(query, cb) {
+      if (!query) {
         query = ''
       }
       let tmp = this.savedConfigs.filter(e => e.indexOf(query) !== -1).map(e => {
@@ -329,16 +396,16 @@ export default {
       this.query = query
       cb(tmp)
     },
-    async handleSelect(obj){
+    async handleSelect(obj) {
       let src = 'configs/watermark/' + obj.value.split('/').map(e => encodeURIComponent(e)).join('/')
-      let {data} = await this.$axios.get(src)
+      let { data } = await this.$axios.get(src)
       this.loadConfig(data)
     },
-    async saveConfig(){
-      if(this.configSaveName === ''){
+    async saveConfig() {
+      if (this.configSaveName === '') {
         return
       }
-      let {data} = await this.$axios.post('./api/configs', {
+      let { data } = await this.$axios.post('./api/configs/watermark', {
         name: this.configSaveName,
         config: this.config
       }).catch(e => {
@@ -350,13 +417,13 @@ export default {
       })
       await this.fetchConfigs()
       this.$notify({
-          title: '保存成功',
-          message: '可以在下次复用该配置文件噢',
-          type: 'success'
-        });
+        title: '保存成功',
+        message: '可以在下次复用该配置文件噢',
+        type: 'success'
+      });
       this.dialogVisible = false
     },
-    getConfig(){
+    getConfig() {
       return this.config
     }
   },

@@ -86,8 +86,10 @@ export default {
 <style lang="scss" scoped>
 .watermark-selector{
   width: 50vw;
+
   .gallery{
     width: 100%;
+      background-color: #fafafa;
   }
 }
 </style>

@@ -33,10 +33,10 @@
             @selected="onBgChange" />
         </div>
         <div v-show="step === 1">
-          <picture-clipper
+          <!-- <picture-clipper
             ref="picture-clipper"
             :bgimg="bgImageUrl"
-            :width="panelWidth" />
+            :width="panelWidth" /> -->
         </div>
         <div v-show="step === 2">
           <WatermarkSelector @selected="onSmallChange" />
@@ -54,6 +54,11 @@
             style="float: right;"
             type="primary"
             @click="saveImages">{{ imageLoading?'生成中':'保存' }}</el-button>
+          <el-button
+            :disabled="imageLoading"
+            style="float: right;"
+            type="warning"
+            @click="reWatermark">{{ imageLoading?'生成中':'再打一层水印' }}</el-button>
           <img
             v-for="(image,index) of images"
             :src="image"
@@ -99,7 +104,8 @@ export default {
       panelWidth: 800,
       images: [],
       imageLoading: false,
-      clippedImage: ''
+      clippedImage: '',
+      clipImage: false
     }
   },
   computed: {
@@ -124,7 +130,12 @@ export default {
         this.maxStep = newVal
       }
       if(newVal === 3){
-        this.clippedImage = await this.$refs['picture-clipper'].getImage()
+        if(this.clipImage){
+          this.clippedImage = await this.$refs['picture-clipper'].getImage()
+        }else{
+          this.clippedImage = this.bgImageUrl
+        }
+
       }
       if (newVal === 4) {
         // this.$refs['watermark-panel'].getImage().then(e => {
@@ -136,12 +147,18 @@ export default {
   },
   methods: {
     goTo(step) {
+      if(step === 1){
+        step = 2
+      }
       if (step <= this.maxStep) {
         this.step = step
       }
     },
     goNext() {
       this.step++
+      if(this.step === 1){
+        this.step++
+      }
     },
     onBgChange(srcs) {
       this.imageUrls = srcs
@@ -154,7 +171,7 @@ export default {
     onSmallChange(src) {
       this.watermarkUrl = src
     },
-    saveImage(imgUrl) {isFinite
+    saveImage(imgUrl) {
       const dlLink = document.createElement('a');
       dlLink.download = 'export.png';
       dlLink.href = imgUrl;
@@ -168,6 +185,12 @@ export default {
       for(let image of this.images){
         this.saveImage(image)
       }
+    },
+    reWatermark(){
+      this.onBgChange([...this.images])
+      this.maxStep = 2
+      this.goTo(2)
+
     },
     async getClippedImages(){
       const panel = this.$refs['picture-clipper']
@@ -192,7 +215,12 @@ export default {
       const BgMaxwidth = this.panelWidth
       this.images = []
       const config = panel.getConfig()
-      const clippedImages = await this.getClippedImages(this.imageUrls)
+      let clippedImages = []
+      if(this.clipImage){
+        clippedImages =  await this.getClippedImages(this.imageUrls)
+      }else{
+        clippedImages = this.imageUrls
+      }
       for (let url of clippedImages) {
         const image = await this.loadImg(url)
         const { ratio } = resizeImage(image.width, image.height, BgMaxwidth, -1)
